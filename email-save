@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Save SES email to S3
+
+Parameters:
+  Recip:
+    Type: String
+    Description: Enter recipients root@mail.com or full domail mail.com.
+
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: BucketOwnerFullControl
+      PublicAccessBlockConfiguration:
+            BlockPublicAcls : true
+            BlockPublicPolicy : true
+            IgnorePublicAcls : true
+            RestrictPublicBuckets : true
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      PolicyDocument:
+        Id: SESPut
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowSESPuts
+            Effect: Allow
+            Principal: {"Service": "ses.amazonaws.com"}
+            Action: 's3:PutObject'
+            Resource: !Join
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref S3Bucket
+                - /*
+      Bucket: !Ref S3Bucket
+
+  ReceiptRuleSet:
+    Type: AWS::SES::ReceiptRuleSet
+    Properties:
+      RuleSetName: SetsEmailForward
+
+  ReceiptRule:
+     Type: AWS::SES::ReceiptRule
+     Properties:
+        RuleSetName: !Ref ReceiptRuleSet
+        Rule:
+          Name: RuleEmailForward
+          Recipients:
+            - !Ref Recip
+          Enabled: true
+          Actions:
+            - S3Action:
+                BucketName: !Ref S3Bucket
