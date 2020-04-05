@@ -2,9 +2,9 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Save SES email to S3
 
 Parameters:
-  Recip:
-    Type: String
-    Description: Enter recipients root@mail.com or full domail mail.com.
+  ListOfRecipients:
+    Type: CommaDelimitedList
+    Description: Enter recipients "root@mail.com, admin@mail.com" or full domail mail.com or .
 
 Resources:
   S3Bucket:
@@ -37,16 +37,15 @@ Resources:
   ReceiptRuleSet:
     Type: AWS::SES::ReceiptRuleSet
     Properties:
-      RuleSetName: SetsEmailForward
+      RuleSetName: SetsWriteToS3Bucket
 
   ReceiptRule:
      Type: AWS::SES::ReceiptRule
      Properties:
         RuleSetName: !Ref ReceiptRuleSet
         Rule:
-          Name: RuleEmailForward
-          Recipients:
-            - !Ref Recip
+          Name: RuleWriteToS3Bucket
+          Recipients: !Ref ListOfRecipients
           Enabled: true
           Actions:
             - S3Action:
